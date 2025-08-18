@@ -1,33 +1,21 @@
-import React, {useState} from "react";
-
-import {useNavigate} from "react-router-dom";
-
+import { useState } from "react";
+import React from "react";
+import './index.css';
+import Button from "./components/Button";
+import Input from "./components/Input";
+import Title from "./components/Title";
+import Text from "./components/Text";
 
 function Home() {
-    const [count,setCount] = useState(0);
-    function upCounter(){
+  const [count, setCount] = useState(0);
 
-        setCount(count + 1);
-    }
-    const navigate = useNavigate();
-
-    function sayHello(){
-        fetch("http://localhost:8080/hello")
-            .then(res => res.json())
-            .then(data => {
-                console.log(data);
-            })
-            .catch(err => {console.log(err)});
-    }
-    return (
-        <div>
-            <p>Welcome to my website!</p>
-            <p>counter : {count}</p>
-            <button onClick={upCounter}>click</button>
-            <button onClick={()=>{navigate("/login")}}>Go to login page</button>
-            <button onClick={sayHello}>Say Hello</button>
-        </div>
-    )
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 ">
+      <h1>Welcome to the Home Page</h1>
+      <p>Current Count: {count}</p>
+      <Button onClick={() => setCount(count + 1)}>Increment</Button>
+    </div>
+  );
 }
 
 export default Home;
