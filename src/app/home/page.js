@@ -85,6 +85,13 @@ export default function HomePage() {
       return;
     }
 
+    if (!file.name.endsWith(".doc") && !file.name.endsWith(".docx")) {
+      alert("Please upload a valid Word document (.doc, .docx)");
+      console.log("Invalid file type: ", file.name);
+      setFile(null);
+      return;
+    }
+    
     const formData = new FormData();
     formData.append("file", file);
 
@@ -115,14 +122,53 @@ export default function HomePage() {
       });
   };
 
+  const handleUpload = () => {
+    if (!file) {
+      alert("Please select a file to upload.");
+      console.log("No file selected for upload.");
+      setFile(null);
+      return;
+    }
+
+    if (!file.name.endsWith(".pdf")) {
+      alert("Please upload a valid PDF document (.pdf).");
+      console.log("Invalid file type: ", file.name);
+      setFile(null);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("http://localhost:8080/api/files", {
+      method: "POST",
+      body: formData,
+      credentials: "include"  
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("File uploaded successfully!");
+          console.log("File uploaded successfully: ", data.fileId, data.fileName);
+          setFile(null);
+        } else {
+          alert("Upload failed: " + (data.message || "Please try again."));
+        }
+      })
+      .catch((error) => {
+        console.error("Error during upload:", error);
+        alert("An error occurred during upload. Please try again.");
+      });
+  }
+  
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile && (selectedFile.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-          || selectedFile.type === "application/msword")) {
+          || selectedFile.type === "application/msword" || selectedFile.type === "application/pdf")) {
       console.log("Word dosyası yüklendi ", selectedFile);
       setFile(selectedFile);
     } else {
-      alert("Lütfen sadece Word dosyası yükleyin (.doc veya .docx)");
+      alert("Lütfen sadece Word veya PDF dosyası yükleyin (.doc, .docx veya .pdf).");
       setFile(null);
       console.log("Geçersiz dosya türü: ", selectedFile ? selectedFile.type : "No file selected");
       event.target.value = ""; 
@@ -155,7 +201,11 @@ export default function HomePage() {
             />
           </CardContent>
           <CardFooter className="flex-col gap-4 justify-center  pb-8">
-            <Button className="w-full max-w-xs" onClick={handleConvert}>Convert</Button>
+            <div className="flex gap-2 pr-45">
+                <Button className="w-full max-w-xs" onClick={handleConvert}>Convert</Button>
+                <Button className="w-full max-w-xs" onClick={handleUpload}>Upload</Button>
+            </div>
+            
             {convertedFile && (
               <Button
                 variant="outline"
