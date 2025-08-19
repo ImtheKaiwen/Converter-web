@@ -1,14 +1,14 @@
 "use client";
 
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Download } from "lucide-react";
 
 
 
-const pdfs = [
+const initialPdfs = [
     {
         id: 1,
         name: "Örnek PDF 1",
@@ -24,20 +24,53 @@ const pdfs = [
 ];
 
 export default function PdflerimPage() {
+    const [pdfs, setPdfs] = useState(initialPdfs);
+
     const handleBack = () => {
         window.history.back();
     };
 
-    const handleDownload = (url, name) => {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = name;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownload = (file_id, file_name) => {
+        fetch(`http://localhost:8080/api/files/download/${file_id}`, {
+            method: "GET",
+            credentials: "include"  
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.blob();
+            })
+            .then((blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = file_name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch((error) => {
+                console.error("Error downloading file:", error);
+                alert("An error occurred while downloading the file. Please try again.");
+            });
     };
 
+    useEffect(() => {
+        fetch("http://localhost:8080/api/files",{
+            credentials: "include"
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert("Failed to fetch PDF files.");
+                } else {
+                    setPdfs(data.files);
+                }
+            })
+            .catch(error => console.error("Error fetching PDF files:", error));
+    }, []);
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
             <div className="mb-6">
@@ -56,21 +89,20 @@ export default function PdflerimPage() {
                             <TableHead className="text-right">İşlemler</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody id="pdf-table-body">
                         {pdfs.map((pdf) => (
                             <TableRow key={pdf.id} className="cursor-pointer hover:bg-muted">
                                 <TableCell
-                                    onClick={() => window.open(pdf.url, "_blank")}
                                     className="font-medium"
                                 >
-                                    {pdf.name}
+                                    {pdf.fileName}
                                 </TableCell>
-                                <TableCell>{pdf.createdAt}</TableCell>
+                                <TableCell>{pdf.createdDate}</TableCell>
                                 <TableCell className="text-right">
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleDownload(pdf.url, pdf.name + ".pdf")}
+                                        onClick={() => handleDownload(pdf.id, pdf.fileName)}
                                         aria-label="İndir"
                                     >
                                         <Download className="w-5 h-5" />

@@ -5,10 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation"; 
 
-
+function testapi() {
+    fetch("http://localhost:8080/api/users")
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error("Error fetching data:", error));
+}
 
 export default function RegisterPage() {
+    const router = useRouter();
     const [form, setForm] = useState({
         firstname: "",
         lastname: "",
@@ -26,10 +33,47 @@ export default function RegisterPage() {
     const handleSubmit = (e) => {
         e.preventDefault();
         setError("");
-        // Register logic here
         alert("Registered!");
     };
 
+    const handleRegister = () => {
+        const newUser = {
+            firstName: form.firstname,
+            lastName: form.lastname,
+            username: form.username,
+            email: form.email,
+            password: form.password,
+        }
+        fetch("http://localhost:8080/api/users", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(newUser),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success === false) {
+                    setError(data.message || "Registration failed. Please try again.");
+                } else {
+                    alert("Registration successful!");
+                    router.push("/");
+                    setForm({
+                        firstname: "",
+                        lastname: "",
+                        username: "",
+                        email: "",
+                        password: "",
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error("Error during registration:", error);
+                setError("An error occurred while registering. Please try again.");
+            }
+        );
+    }
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <Card className="w-full max-w-md">
@@ -101,10 +145,13 @@ export default function RegisterPage() {
                         {error && (
                             <div className="text-red-500 text-sm">{error}</div>
                         )}
-                        <Button type="submit" className="w-full">
+                        <Button type="submit" className="w-full" onClick={handleRegister}>
                             Kayıt Ol
                         </Button>
                     </form>
+                    <Button className="w-full mt-4" onClick={testapi}>
+                        Api test
+                    </Button>
                 </CardContent>
             </Card>
         </div>
